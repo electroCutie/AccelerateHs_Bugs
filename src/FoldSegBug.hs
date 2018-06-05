@@ -14,7 +14,7 @@ import           Data.Array.Accelerate.LLVM.PTX
 
 
 segmentedFoldBug :: forall a. (A.ToFloating Int a, A.Floating a, A.Ord a) => Acc (Scalar a)
-segmentedFoldBug  = A.maximum $ A.foldSeg (-) 0 genDat segmentsAcc where
+segmentedFoldBug  = A.maximum $ A.foldSeg (+) 0 genDat segmentsAcc where
     segments = seg 0 1 where
       seg s n
         | s > 45000000 = []
