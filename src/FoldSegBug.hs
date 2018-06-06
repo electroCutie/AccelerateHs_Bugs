@@ -11,14 +11,14 @@ import           Data.Array.Accelerate          (Acc, Scalar, Vector, Z (..))
 import qualified Data.Array.Accelerate          as A
 import           Data.Array.Accelerate.LLVM.PTX
 
-import           Control.Monad                  (when)
+import           Control.Monad                  (unless)
 
 import           GHC.Float
 import           System.Console.CmdArgs
 import           Text.Printf
 
 segFoldTest :: TestArgs -> IO ()
-segFoldTest (TestArgs segStart segSumMax doFloats doDoubles doInts) = foldl1 (>>) (loop <$> [ segStart - x | x <- [0..segStart-1]]) where
+segFoldTest (TestArgs segStart segSumMax doFloats doDoubles doShorts doInts doLongs) = foldl1 (>>) (loop <$> [ segStart - x | x <- [0..segStart-1]]) where
   dat :: Num a => [a]
   dat = cycle $ map fromIntegral [0..99::Int]
 
@@ -26,20 +26,23 @@ segFoldTest (TestArgs segStart segSumMax doFloats doDoubles doInts) = foldl1 (>>
   loop segMax = do
     let
       softInts = maximum $ softwareSegFold segments dat :: Int
-      ds = segmentedFoldBug :: Acc (Scalar Double)
-      fs = segmentedFoldBug :: Acc (Scalar Float)
-      is = segmentedFoldBug :: Acc (Scalar Int)
-      d = head . A.toList $ run ds
-      f = head . A.toList $ run fs
-      i = head . A.toList $ run is
+      oneTest :: forall a b. (A.Num a, A.Ord a, Num a, Eq a, PrintfArg b) => Bool -> String -> (Int -> a) -> (a -> b) -> IO ()
+      oneTest b fmt conv prnt = let
+        v  = segmentedFoldBug :: Acc (Scalar a)
+        v' = head . A.toList $ run v
+        in unless b $
+            putStrLn $ printf fmt (if v' /= conv softInts then "!!!" else "   ") (prnt v')
+
     putStrLn $ printf "%d max seg size" segMax
     putStrLn $ printf "   % 8d (software)" softInts
-    when doDoubles $
-      putStrLn $ printf "%s% 8.0f (gpu doubles)" (if d /= int2Double softInts then "!!!" else "   ") d
-    when doFloats $
-      putStrLn $ printf "%s% 8.0f (gpu floats)" (if f /= int2Float softInts then "!!!" else "   ") f
-    when doInts $
-      putStrLn $ printf "%s% 8d (gpu ints)" (if i /= softInts then "!!!" else "   ") i
+
+    oneTest doDoubles "%s% 8.0f (gpu doubles)" int2Double id
+    oneTest doFloats  "%s% 8.0f (gpu floats)"  int2Float id
+
+    oneTest doShorts "%s% 8d (gpu shorts)" (fromIntegral :: Int -> A.CShort) (fromIntegral :: A.CShort -> Int)
+    oneTest doInts   "%s% 8d (gpu ints)"    id id
+    oneTest doLongs  "%s% 8d (gpu longs)" (fromIntegral :: Int -> A.CLong) (fromIntegral :: A.CLong -> Integer)
+
     putStrLn ""
     where
       segments :: [Int]
@@ -66,17 +69,19 @@ segFoldTest (TestArgs segStart segSumMax doFloats doDoubles doInts) = foldl1 (>>
           genAcc = A.use $ A.fromList (Z A.:. segSum) dat
 
 data TestArgs = TestArgs {
-    segstart, segmax      :: Int,
-    floats, doubles, ints :: Bool
+    segstart, segmax                     :: Int,
+    floats, doubles, shorts, ints, longs :: Bool
   } deriving (Show, Data, Typeable)
 
 sampleArgs :: TestArgs
 sampleArgs = TestArgs {
-    segstart  = (300 :: Int)          &= help "Maximum size of segments to start with",
+    segstart  = (260 :: Int)          &= help "Maximum size of segments to start with",
     segmax    = (60 * 1000000 :: Int) &= help "Number of elements to run the test on",
-    floats    = True                  &= help "perform GPU tests on floats",
-    doubles   = True                  &= help "perform GPU tests on doubles",
-    ints      = True                  &= help "perform GPU tests on ints"
+    floats    = False                 &= help "skip GPU tests on floats",
+    doubles   = False                 &= help "skip GPU tests on doubles",
+    shorts    = False                 &= help "skip GPU tests on shorts",
+    ints      = False                 &= help "skip GPU tests on ints",
+    longs     = False                 &= help "skip GPU tests on longs"
   }
 
 main :: IO ()
