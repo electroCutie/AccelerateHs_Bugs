@@ -6,8 +6,7 @@
 module Main where
 
 
-import           Data.Array.Accelerate          ((:.), Acc, Exp, Scalar, Vector,
-                                                 Z (..))
+import           Data.Array.Accelerate          (Acc, Scalar, Vector, Z (..))
 import qualified Data.Array.Accelerate          as A
 import           Data.Array.Accelerate.LLVM.PTX
 
