@@ -36,12 +36,12 @@ segFoldTest (TestArgs segStart segSumMax doFloats doDoubles doShorts doInts doLo
     putStrLn $ printf "%d max seg size" segMax
     putStrLn $ printf "   % 8d (software)" softInts
 
+    oneTest doShorts "%s% 8d (gpu shorts)" (fromIntegral :: Int -> A.CShort) (fromIntegral :: A.CShort -> Int)
+    oneTest doInts   "%s% 8d (gpu ints)"   (fromIntegral :: Int -> A.Int32) (fromIntegral :: A.Int32 -> Int)
+    oneTest doLongs  "%s% 8d (gpu longs)"  (fromIntegral :: Int -> A.CLong)  (fromIntegral :: A.CLong -> Integer)
+
     oneTest doDoubles "%s% 8.0f (gpu doubles)" int2Double id
     oneTest doFloats  "%s% 8.0f (gpu floats)"  int2Float id
-
-    oneTest doShorts "%s% 8d (gpu shorts)" (fromIntegral :: Int -> A.CShort) (fromIntegral :: A.CShort -> Int)
-    oneTest doInts   "%s% 8d (gpu ints)"    id id
-    oneTest doLongs  "%s% 8d (gpu longs)" (fromIntegral :: Int -> A.CLong) (fromIntegral :: A.CLong -> Integer)
 
     putStrLn ""
     where

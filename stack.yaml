@@ -4,19 +4,17 @@ packages:
 - .
 
 extra-deps:
-  # - accelerate-1.2.0.0
-  # - accelerate-llvm-ptx-1.2.0.0
-  # - accelerate-llvm-1.2.0.0
   - git:    https://github.com/tmcdonell/accelerate.git
     commit: 442dcbdb8d95407bc650d8f4ce6aa62ab593e484
 
   - git:    https://github.com/tmcdonell/accelerate-llvm.git
-    commit: 6aacde0ffae37552f5f5bacd1ae3029b14012f8c
+    commit: e802c05f75004e8df27ac1fe955f15370c907114
     subdirs:
       - 'accelerate-llvm'
       - 'accelerate-llvm-native'
       - 'accelerate-llvm-ptx'
-  - 'cuda-0.9.0.3'
+  - git:    https://github.com/tmcdonell/cuda.git
+    commit: d0f53026c25bbf372f2a2be43ac294c0158ea99e
   - 'nvvm-0.8.0.3'
   - hashtables-1.2.3.1
   - tasty-hedgehog-0.2.0.0
